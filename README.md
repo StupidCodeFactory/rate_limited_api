@@ -1,13 +1,13 @@
-# RateLimitedApi
+#### RateLimitedApi ####
 
-TODO: Write a gem description
+This library aims at managing rate limitation of APIs accross multiple
+server/application
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-    gem 'rate_limited_api'
-
+```shell
+    gem 'rate_limited_api', github: 'StupidCodeFactory/rate_limited_api'
+```
 And then execute:
 
     $ bundle
@@ -18,8 +18,11 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
-
+```ruby
+    rate_limiter = RateLimitedApi::Limiter.new :facebook, 150, :day
+    graph = Koala::Facebook::API.new(oauth_access_token)
+    facebook = RateLimitedApi::Api.new(graph, [:get_object, :get_connections], rate_limiter)
+```
 ## Contributing
 
 1. Fork it
