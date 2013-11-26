@@ -16,14 +16,14 @@ And then execute:
 
 ## Usage
 
-# configuration
+### configuration
 ```ruby
     RateLimitedApi.configure do |config|
       config.redis = "redis://redis.example.com:666"
     end
 ```
 
-#use with any object
+### use with any object
 ```ruby
     rate_limiter = RateLimitedApi::Limiter.new :facebook, 150, :day
     graph = Koala::Facebook::API.new(oauth_access_token)
@@ -33,7 +33,7 @@ And then execute:
 
     facebook.get_object('me') # ooops raises RateLimitedApi::RateLimitReached !
 ```
-## Contributing
+### Contributing
 
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
