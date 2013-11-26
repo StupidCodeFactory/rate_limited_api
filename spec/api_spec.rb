@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe RateLimitedApi do
+describe RateLimitedApi::Api do
   let(:service_object)  { ExternalRateLimitedApi.new }
   let(:limiter)         { RateLimitedApi::Limiter.new(:foo, 150, :second) }
   let(:limited_methods) { [:get_user, :post_message] }
@@ -30,8 +30,8 @@ describe RateLimitedApi do
     end
 
     it "should raise an RateLimitedApi::RateLimitReached" do
-      mock_redis.should_receive(:get).exactly(4).times.with(:foo).and_return(150)
-
+      mock_redis.should_receive(:get).times.with(:foo).and_return(150)
+      expect { api.get_user }.to raise_exception(RateLimitedApi::RateLimitReached)
     end
   end
 
