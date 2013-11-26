@@ -16,6 +16,14 @@ And then execute:
 
 ## Usage
 
+# configuration
+```ruby
+    RateLimitedApi.configure do |config|
+      config.redis = "redis://redis.example.com:666"
+    end
+```
+
+#use with any object
 ```ruby
     rate_limiter = RateLimitedApi::Limiter.new :facebook, 150, :day
     graph = Koala::Facebook::API.new(oauth_access_token)
