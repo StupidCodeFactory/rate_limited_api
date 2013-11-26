@@ -3,6 +3,8 @@
 This library aims at managing rate limitation of APIs accross multiple
 server/application
 
+It currently depends on redis
+
 ## Installation
 
 ```shell
@@ -11,10 +13,6 @@ server/application
 And then execute:
 
     $ bundle
-
-Or install it yourself as:
-
-    $ gem install rate_limited_api
 
 ## Usage
 
