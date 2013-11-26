@@ -23,7 +23,7 @@ Or install it yourself as:
     graph = Koala::Facebook::API.new(oauth_access_token)
     facebook = RateLimitedApi::Api.new(graph, [:get_object, :get_connections], rate_limiter)
     100.times { facebook.get_object('me') }     # => '{'id': 123123234}'
-    50.times { facebook.get_connections('me', friends') } # => '{'friends': [{'id': 4564564}]}'
+    50.times { facebook.get_connections('me', 'friends') } # => '{'friends': [{'id': 4564564}]}'
 
     facebook.get_object('me') # ooops raises RateLimitedApi::RateLimitReached !
 ```
