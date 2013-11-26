@@ -8,8 +8,10 @@ describe RateLimitedApi::Api do
   let(:mock_redis)      { double(Redis) }
   let(:nowish)          { Time.now }
 
+
   context "When the rate limit hasn't been reached" do
     before do
+      mock_redis.should_receive(:multi).twice.and_yield
       Redis.should_receive(:new).with(RateLimitedApi.configuration.redis).and_return(mock_redis)
       Time.stub(:now).and_return(nowish)
       mock_redis.should_receive(:get).exactly(4).times.with(:foo).and_return(15)
@@ -25,6 +27,7 @@ describe RateLimitedApi::Api do
 
   describe "When the rate limit has been reached" do
     before do
+      mock_redis.should_receive(:multi).and_yield
       Redis.should_receive(:new).with(RateLimitedApi.configuration.redis).and_return(mock_redis)
       Time.stub(:now).and_return(nowish)
     end

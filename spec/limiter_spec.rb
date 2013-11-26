@@ -8,6 +8,7 @@ describe RateLimitedApi::Limiter do
     let!(:nowish)     { Time.now }
 
     before do
+      mock_redis.should_receive(:multi).and_yield
       Redis.should_receive(:new).with(RateLimitedApi.configuration.redis).and_return(mock_redis)
       Time.stub(:now).and_return(nowish)
     end
