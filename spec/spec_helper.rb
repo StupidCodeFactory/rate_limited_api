@@ -11,5 +11,8 @@ class ExternalRateLimitedApi
   def post_message;  "Message posted!" end
 
   def unlimited_method_call; end
+
+  private
+  def private_stuff; end
 end
 
