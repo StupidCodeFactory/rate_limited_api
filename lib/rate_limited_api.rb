@@ -24,7 +24,7 @@ module RateLimitedApi
     attr_accessor :redis
 
     def initialize
-      @redis = "redis://localhost:6379"
+      @redis = {host: 'localhost', port: 6379}
     end
   end
 

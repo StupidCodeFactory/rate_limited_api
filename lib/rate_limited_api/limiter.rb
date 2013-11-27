@@ -11,9 +11,8 @@ module RateLimitedApi
     end
 
     def incr
+      raise RateLimitReached if has_reached_limit?
       redis.multi do
-        raise RateLimitReached if has_reached_limit?
-
         set_expiry if set_expiry?
         redis.incr api_id
       end
@@ -26,11 +25,11 @@ module RateLimitedApi
     end
 
     def set_expiry
-      redis.expire expires_in
+      redis.expire api_id, expires_in
     end
 
     def has_reached_limit?
-      api_count >= rate
+      Integer(api_count) >= rate
     end
 
     def api_count

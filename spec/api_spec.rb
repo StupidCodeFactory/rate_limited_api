@@ -27,7 +27,7 @@ describe RateLimitedApi::Api do
 
   describe "When the rate limit has been reached" do
     before do
-      mock_redis.should_receive(:multi).and_yield
+      mock_redis.should_not_receive(:multi)
       Redis.should_receive(:new).with(RateLimitedApi.configuration.redis).and_return(mock_redis)
       Time.stub(:now).and_return(nowish)
     end
