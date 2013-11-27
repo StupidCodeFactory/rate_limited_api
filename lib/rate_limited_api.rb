@@ -1,10 +1,8 @@
 require "rate_limited_api/version"
 require "rate_limited_api/api"
 require "rate_limited_api/limiter"
-require "active_support/core_ext/string"
-require "active_support/core_ext/numeric"
-require "active_support/core_ext/date"
-require "active_support/core_ext/date_time"
+require "active_support/core_ext"
+require "resque_scheduler"
 require "redis"
 
 module RateLimitedApi
@@ -24,7 +22,7 @@ module RateLimitedApi
     attr_accessor :redis
 
     def initialize
-      @redis = {host: 'localhost', port: 6379}
+      @redis = Redis.new(host: 'localhost', port: 6379)
     end
   end
 
