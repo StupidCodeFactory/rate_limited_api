@@ -19,6 +19,10 @@ describe RateLimitedApi::Limiter do
           limiter.incr
         end
 
+        it "sets the start time key" do
+          limiter.incr
+          Integer(r.get('foo_started_at')).should == nowish.to_i
+        end
       end
 
       context "When it's not the first api call" do

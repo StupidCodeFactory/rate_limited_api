@@ -14,6 +14,7 @@ module RateLimitedApi
       raise RateLimitReached if has_reached_limit?
 
       if set_expiry?
+        start!
         redis.multi do
           redis.rpush api_id, api_id
           set_expiry
@@ -24,21 +25,25 @@ module RateLimitedApi
     end
 
     def expires_in
+      return unless @start
       @expires_in ||= (@start + 1.send(@time_unit)).to_i
     end
 
-    def start!
-      @start ||= Time.now
-    end
-
     private
+
+    def start!
+      @start ||= begin
+        s = Time.now
+        redis.set(started_at_key, s.to_i)
+        s
+      end
+    end
 
     def set_expiry?
       !redis.exists(api_id)
     end
 
     def set_expiry
-      redis.set(started_at_key, start!.to_i)
       redis.expire api_id, expires_in
     end
 
