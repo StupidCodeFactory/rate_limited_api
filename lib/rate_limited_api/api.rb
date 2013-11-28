@@ -9,6 +9,7 @@ module RateLimitedApi
 
     def method_missing(method_name, *args)
       if @object.respond_to?(method_name)
+
         if !@retry_klass
           @limiter.incr if @limited_methods.include?(method_name.to_sym)
           @object.send(method_name, *args)

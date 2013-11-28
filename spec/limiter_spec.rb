@@ -15,7 +15,8 @@ describe RateLimitedApi::Limiter do
 
       context "When it's the first api call" do
         it "sets the expirey of the key" do
-          r.should_receive(:expire).with(:foo, nowish.to_i + 1.day.to_i)
+          puts nowish.to_i
+          r.should_receive(:expire).with(:foo, (nowish.to_i + 1.day))
           limiter.incr
         end
 
@@ -43,6 +44,15 @@ describe RateLimitedApi::Limiter do
         end
       end
 
+    end
+
+    describe "#expires_in" do
+      it "calculates the remaining time in seconds" do
+        in_two_hours = nowish + 2.hours
+        limiter.incr
+        Time.should_receive(:now).and_return(in_two_hours)
+        limiter.expires_in.should == 22.hours.to_i
+      end
     end
 
     context "When the rate limit has been reached" do
