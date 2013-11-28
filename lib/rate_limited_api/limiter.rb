@@ -29,11 +29,16 @@ module RateLimitedApi
     end
 
     def ends_at
-      @start + 1.send(@time_unit)
+      @start + duration
     end
 
     def expires_in
-      (ends_at - Time.now).to_i
+      now = Time.now
+      if ends_at <= now
+        0
+      else
+        (ends_at - now).to_i
+      end
     end
 
     private
@@ -56,6 +61,7 @@ module RateLimitedApi
 
     def set_expiry s
       redis.expire api_id, s.to_i + duration
+      redis.expire started_at_key, s.to_i + duration
     end
 
     def has_reached_limit?
