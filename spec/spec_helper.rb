@@ -1,31 +1,34 @@
 require 'bundler/setup'
 
-Bundler.setup
+Bundler.setup :default
 
 require 'rspec'
 require 'rate_limited_api'
-require 'resque_spec/scheduler'
+require 'byebug'
+require 'database_cleaner'
+
+
 
 RSpec.configure do |c|
   c.mock_with :rspec
+
+  c.before(:suite) do
+    DatabaseCleaner[:redis, url: 'redis://localhost:6379/10']
+    DatabaseCleaner.strategy = :truncation
+    DatabaseCleaner.clean_with(:truncation)
+  end
+
+  c.around(:each) do |example|
+    DatabaseCleaner.cleaning do
+      example.run
+    end
+  end
+
   c.before do
     RateLimitedApi.configuration.redis.flushall
-
   end
 end
 
-class ExternalRateLimitedApi
-  def get_user; "Here is your user" end
-
-  def post_message;  "Message posted!" end
-
-  def post_comment(comment); end
-
-  def unlimited_method_call; end
-
-  private
-  def private_stuff; end
-end
 
 class RetryApiCall
   @queue = :retry_api_call

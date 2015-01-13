@@ -1,28 +1,31 @@
 require 'spec_helper'
 
-describe RateLimitedApi::Limiter do
+RSpec.describe RateLimitedApi::Limiter do
+
   let(:limiter) { RateLimitedApi::Limiter.new(:foo, 10, :day) }
-  let(:r) { RateLimitedApi.configuration.redis }
+  let(:r)       { Redis.new(url: 'redis://localhost:6379/10') }
+  let(:start_key) { 'foo_started_at' }
+
+  before do
+    expect(RateLimitedApi.configuration).to receive(:redis).and_return(r)
+  end
 
   describe "#incr" do
-    let!(:nowish)     { Time.now }
+    let!(:nowish)  { Time.now.to_i }
 
     before do
-      Time.stub(:now).and_return(nowish)
+      allow(Time).to receive(:now).and_return(nowish)
+      expect(r).to receive(:set).with(start_key, nowish)
     end
 
     context "When the rate limit hasn't been reached" do
 
       context "When it's the first api call" do
-        it "sets the expirey of the key" do
-          puts nowish.to_i
-          r.should_receive(:expire).with(:foo, (nowish.to_i + 1.day))
-          limiter.incr
-        end
 
-        it "sets the start time key" do
+        it 'sets the start time key and expiry of the key' do
+          expect(r).to receive(:expire).with(:foo,      nowish + 1.day)
+          expect(r).to receive(:expire).with(start_key, nowish + 1.day)
           limiter.incr
-          Integer(r.get('foo_started_at')).should == nowish.to_i
         end
       end
 
@@ -32,7 +35,9 @@ describe RateLimitedApi::Limiter do
         end
 
         it "does not set the expiry time" do
-          r.should_not_receive(:expire)
+          expect(r).to_not receive(:expire).with(:foo,      nowish + 1.day)
+          expect(r).to_not receive(:expire).with(start_key, nowish + 1.day)
+
           limiter.incr
         end
 

@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe "Configuration" do
   it "has a sensible default redis configuration" do
-    RateLimitedApi.configuration.redis.client.host == 'localhost'
-    RateLimitedApi.configuration.redis.client.port == 6379
+    expect(RateLimitedApi.configuration.redis.client.host).to eq('localhost')
+    expect(RateLimitedApi.configuration.redis.client.port).to eq(6379)
   end
 
   it "enables configuration on of the redis server" do

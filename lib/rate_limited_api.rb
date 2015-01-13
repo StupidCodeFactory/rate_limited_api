@@ -1,13 +1,24 @@
-require "rate_limited_api/version"
-require "rate_limited_api/api"
-require "rate_limited_api/limiter"
-require "active_support/core_ext"
-require "resque_scheduler"
-require "redis"
+require 'rate_limited_api/api'
+require 'rate_limited_api/limiter'
+require 'active_support'
+require 'active_support/core_ext/numeric'
+# require "resque_scheduler"
+require 'redis'
 
 module RateLimitedApi
   class << self
     attr_accessor :configuration
+
+    @@limiters = {}
+
+    def register(limiter, rate, limite)
+      @@limiters[limiter] = Limiter.new(limiter, rate, limite)
+    end
+
+    def [](limiter)
+      @@limiters[limiter]
+    end
+
   end
 
   def self.configure

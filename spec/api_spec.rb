@@ -1,7 +1,60 @@
 require 'spec_helper'
 
-describe RateLimitedApi::Api do
+class ExternalRateLimitedApi
+  include RateLimitedApi::DSL
+  attr_reader :proc
+  def initialize
+    @proc = Proc.new { 1 + 1 }
+  end
+end
+
+
+RSpec.describe RateLimitedApi::DSL do
   let(:service_object)  { ExternalRateLimitedApi.new }
+
+  before do
+
+    RateLimitedApi.register :foo, 10, :seconds
+
+    def service_object.foo_no_block
+      with_limiter :foo
+    end
+
+    def service_object.unregistered_limiter
+      with_limiter :bar do
+        # never executed
+      end
+    end
+
+    def service_object.registered_limiter
+      with_limiter :foo, &proc
+    end
+
+  end
+
+  describe '#with_limiter' do
+
+    it 'must be called with a block' do
+      expect { service_object.foo_no_block }.to raise_error(
+        ArgumentError, 'RateLimitedApi::DSL#with_limiter must be called with a block')
+    end
+
+    it 'must be called woth a registered limiter' do
+      expect { service_object.unregistered_limiter }.to raise_error(
+        ArgumentError, "Unknown limiter 'bar'")
+    end
+
+    it 'calls the registered limiter with the given block' do
+      expect(RateLimitedApi[:foo]).to receive(:limit).and_yield
+      expect(service_object.proc).to  receive(:call)
+      service_object.registered_limiter
+    end
+  end
+end
+
+
+RSpec.describe RateLimitedApi::Api do
+
   let(:limiter)         { RateLimitedApi::Limiter.new(:foo, 10, :day) }
   let(:limited_methods) { [:get_user, :post_message, :post_comment] }
   let(:retry_klass)     { nil }
