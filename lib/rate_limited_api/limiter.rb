@@ -15,15 +15,19 @@ module RateLimitedApi
 
     end
 
-
-    def limit &block
-      block.call
+    def limit(args = [], &block)
+      incr
+      block.call(*args)
     end
 
+    def schedule(args = [], &block)
+    end
+
+    def has_reached_limit?
+      Integer(api_count) >= rate
+    end
 
     def incr
-      raise RateLimitReached if has_reached_limit?
-
       if set_expiry?
         s = start!
         redis.multi do
@@ -34,6 +38,8 @@ module RateLimitedApi
         redis.rpushx api_id, api_id
       end
     end
+
+    private
 
     def ends_at
       @start + duration
@@ -47,8 +53,6 @@ module RateLimitedApi
         (ends_at - now).to_i
       end
     end
-
-    private
 
     def duration
       1.send(@time_unit)
@@ -71,10 +75,6 @@ module RateLimitedApi
 
       redis.expire api_id,         expires_at
       redis.expire started_at_key, expires_at
-    end
-
-    def has_reached_limit?
-      Integer(api_count) >= rate
     end
 
     def api_count

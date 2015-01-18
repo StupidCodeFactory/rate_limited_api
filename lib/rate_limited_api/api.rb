@@ -1,14 +1,18 @@
 module RateLimitedApi
   module DSL
 
-    def with_limiter limiter_id, &block
+    def with_limiter limiter_id, args = [], &block
       raise ArgumentError.new 'RateLimitedApi::DSL#with_limiter must be called with a block' unless block_given?
 
       limiter = RateLimitedApi[limiter_id]
 
       raise ArgumentError.new "Unknown limiter '#{limiter_id}'" if limiter.nil?
 
-      limiter.limit(&block)
+      if !limiter.has_reached_limit?
+        limiter.limit(args, &block)
+      else
+        limiter.schedule(args, &block)
+      end
     end
   end
 end

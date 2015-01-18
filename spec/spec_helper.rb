@@ -6,8 +6,8 @@ require 'rspec'
 require 'rate_limited_api'
 require 'byebug'
 require 'database_cleaner'
-
-
+require 'mimic'
+require 'rack/throttle'
 
 RSpec.configure do |c|
   c.mock_with :rspec

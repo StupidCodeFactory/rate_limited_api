@@ -1,8 +1,10 @@
 require 'spec_helper'
+require 'net/http'
 
 class ExternalRateLimitedApi
   include RateLimitedApi::DSL
   attr_reader :proc
+
   def initialize
     @proc = Proc.new { 1 + 1 }
   end
@@ -15,6 +17,7 @@ RSpec.describe RateLimitedApi::DSL do
   before do
 
     RateLimitedApi.register :foo, 10, :seconds
+    RateLimitedApi.register :baz, 5, :seconds
 
     def service_object.foo_no_block
       with_limiter :foo
@@ -30,6 +33,12 @@ RSpec.describe RateLimitedApi::DSL do
       with_limiter :foo, &proc
     end
 
+    def service_object.chained_registered_limiter
+      with_limiter :foo do
+        with_limiter(:baz, &proc)
+      end
+    end
+
   end
 
   describe '#with_limiter' do
@@ -39,7 +48,7 @@ RSpec.describe RateLimitedApi::DSL do
         ArgumentError, 'RateLimitedApi::DSL#with_limiter must be called with a block')
     end
 
-    it 'must be called woth a registered limiter' do
+    it 'must be called with a registered limiter' do
       expect { service_object.unregistered_limiter }.to raise_error(
         ArgumentError, "Unknown limiter 'bar'")
     end
@@ -49,60 +58,67 @@ RSpec.describe RateLimitedApi::DSL do
       expect(service_object.proc).to  receive(:call)
       service_object.registered_limiter
     end
-  end
-end
 
+    describe 'with chained limiters' do
 
-RSpec.describe RateLimitedApi::Api do
+      it 'calls all of the limiters' do
+        expect(RateLimitedApi[:foo]).to receive(:limit).and_yield
+        expect(RateLimitedApi[:baz]).to receive(:limit).and_yield
+        expect(service_object.proc).to  receive(:call)
 
-  let(:limiter)         { RateLimitedApi::Limiter.new(:foo, 10, :day) }
-  let(:limited_methods) { [:get_user, :post_message, :post_comment] }
-  let(:retry_klass)     { nil }
-  let(:api)             { RateLimitedApi::Api.new(service_object, limited_methods, limiter, retry_klass) }
-  let(:r) { RateLimitedApi.configuration.redis }
-  let!(:nowish)          { Time.now }
-
-
-  context "When the rate limit hasn't been reached" do
-    before do
-      Time.stub(:now).and_return(nowish)
-    end
-
-    it "allows limited methods to be called" do
-      api.get_user.should     == "Here is your user"
-      api.post_message.should ==  "Message posted!"
-    end
-
-  end
-
-  describe "When the rate limit has been reached" do
-    before do
-      10.times { limiter.incr }
-    end
-
-    it "should raise an RateLimitedApi::RateLimitReached" do
-      expect { api.get_user }.to raise_exception(RateLimitedApi::RateLimitReached)
-    end
-
-    describe "Retrying a call" do
-      let(:retry_klass) { RetryApiCall }
-      it "sechdules a jobs to execute failed calls" do
-        expect { api.post_comment("trolling") }.not_to raise_error
-        RetryApiCall.should have_scheduled(:post_comment, ["trolling"])
+        service_object.chained_registered_limiter
       end
+
     end
+
+    describe 'When the limit has been reached' do
+
+      it 'schedules the a job' do
+        expect(RateLimitedApi[:foo]).to receive(:schedule).and_yield
+        11.times { service_object.registered_limiter }
+      end
+
+    end
+
   end
 
-  describe "#method_missing" do
-    it "responds to public api of the wrapped object" do
-      api.should respond_to(:get_user)
-      api.should respond_to(:post_message)
-      api.should respond_to(:unlimited_method_call)
+  describe 'with an external API' do
+
+    before do
+
+      def service_object.api_calls(seconds_to_wait = 2)
+        responses = []
+        with_limiter :foo do
+          3.times do |i|
+            responses << Net::HTTP.get(URI("http://localhost:#{Mimic::MIMIC_DEFAULT_PORT}/pong"))
+            sleep seconds_to_wait
+          end
+        end
+        responses
+      end
+
+
+      Mimic.mimic(log: STDOUT) do
+        use Rack::Throttle::Interval, min: 2
+        get('/pong') do
+          [200, {}, 'pong']
+        end
+      end
+
     end
 
-    it "does not respond to private methods of the wrapped object" do
-      api.should_not respond_to(:private_stuff)
+    it 'allows all requests' do
+      expect(service_object.api_calls).to eq(['pong'] * 3)
     end
+
+    describe 'when exceeding allowed requests' do
+
+      it 'only perform the possible request and returns 403 for other requests' do
+        expect(service_object.api_calls(1)).to eq([
+            "pong", "403 Forbidden (Rate Limit Exceeded)\n", "403 Forbidden (Rate Limit Exceeded)\n"])
+      end
+
+    end
+
   end
-
 end

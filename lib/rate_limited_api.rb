@@ -2,7 +2,7 @@ require 'rate_limited_api/api'
 require 'rate_limited_api/limiter'
 require 'active_support'
 require 'active_support/core_ext/numeric'
-# require "resque_scheduler"
+
 require 'redis'
 
 module RateLimitedApi
@@ -17,6 +17,10 @@ module RateLimitedApi
 
     def [](limiter)
       @@limiters[limiter]
+    end
+
+    def limiters
+      @@limiters
     end
 
   end
