@@ -4,10 +4,11 @@ Bundler.setup :default
 
 require 'rspec'
 require 'rate_limited_api'
-require 'byebug'
 require 'database_cleaner'
 require 'mimic'
 require 'rack/throttle'
+
+require 'byebug' rescue LoadError
 
 RSpec.configure do |c|
   c.mock_with :rspec
