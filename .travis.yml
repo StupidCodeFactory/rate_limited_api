@@ -1,0 +1,11 @@
+language: ruby
+rvm:
+  - 2.2.x
+  - 2.1.x
+  - 2.0.c
+  - jruby-19mode
+  - ruby-head
+  - jruby-head
+before_install:
+  - gem update --system
+  - gem --version
