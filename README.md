@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/StupidCodeFactory/rate_limited_api.svg)](https://travis-ci.org/StupidCodeFactory/rate_limited_api)
-
+![Dependency Status](https://gemnasium.com/StupidCodeFactory/rate_limited_api.svg)](https://gemnasium.com/StupidCodeFactory/rate_limited_api)
 #### RateLimitedApi ####
 
 This library aims at managing rate limitation of APIs accross multiple
