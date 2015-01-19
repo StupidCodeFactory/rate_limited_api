@@ -51,23 +51,14 @@ RSpec.describe RateLimitedApi::Limiter do
 
     end
 
-    describe "#expires_in" do
-      it "calculates the remaining time in seconds" do
-        in_two_hours = nowish + 2.hours
-        limiter.incr
-        Time.should_receive(:now).and_return(in_two_hours)
-        limiter.expires_in.should == 22.hours.to_i
-      end
-    end
-
     context "When the rate limit has been reached" do
       before do
         10.times { limiter.incr }
       end
 
       describe '#has_reached_limit?' do
-        it "is false" do
-          expect(limiter.has_reached_limit?).to be false
+        it "is true" do
+          expect(limiter.has_reached_limit?).to be true
         end
       end
 
