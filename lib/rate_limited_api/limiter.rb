@@ -20,7 +20,8 @@ module RateLimitedApi
       block.call(*args)
     end
 
-    def schedule(args = [], &block)
+    def schedule(retry_klass, args = [])
+      retry_klass.set(wait: 1).perfom_later(*args)
     end
 
     def has_reached_limit?

@@ -10,6 +10,15 @@ class ExternalRateLimitedApi
   end
 end
 
+class RetryJob < ActiveJob::Base
+  queue_as :default
+
+  def perfom(*args)
+    # do stuf with args
+  end
+end
+
+
 
 RSpec.describe RateLimitedApi::DSL do
   let(:service_object)  { ExternalRateLimitedApi.new }
@@ -31,6 +40,10 @@ RSpec.describe RateLimitedApi::DSL do
 
     def service_object.registered_limiter
       with_limiter :foo, &proc
+    end
+
+    def service_object.registered_limiter_with_retry_job
+      with_limiter :foo, ['some', 'args'], RetryJob, &proc
     end
 
     def service_object.chained_registered_limiter
@@ -59,7 +72,7 @@ RSpec.describe RateLimitedApi::DSL do
       service_object.registered_limiter
     end
 
-    describe 'with chained limiters' do
+    describe 'with nested limiters' do
 
       it 'calls all of the limiters' do
         expect(RateLimitedApi[:foo]).to receive(:limit).and_yield
@@ -71,15 +84,26 @@ RSpec.describe RateLimitedApi::DSL do
 
     end
 
-    describe 'When the limit has been reached' do
+    describe 'with a limit breach' do
+      describe 'when no background job class is provided' do
 
-      it 'schedules the a job' do
-        expect(RateLimitedApi[:foo]).to receive(:schedule).and_yield
-        11.times { service_object.registered_limiter }
+        it 'does not schedule a job' do
+          expect(RateLimitedApi[:foo]).to_not receive(:schedule).and_yield
+          11.times { service_object.registered_limiter }
+        end
+
+      end
+
+      describe 'when a background job class is provided' do
+
+        it 'does schedule a job' do
+          expect(RateLimitedApi[:foo]).to receive(:schedule).with(RetryJob, ['some', 'args'])
+          11.times { service_object.registered_limiter_with_retry_job }
+        end
+
       end
 
     end
-
   end
 
   describe 'with an external API' do

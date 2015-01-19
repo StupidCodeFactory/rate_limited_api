@@ -65,11 +65,10 @@ RSpec.describe RateLimitedApi::Limiter do
         10.times { limiter.incr }
       end
 
-      it "the counter is not incremented and raises a RateLimitReached exception" do
-        r.should_not_receive(:incr)
-        expect {
-          limiter.incr
-        }.to raise_exception(RateLimitedApi::RateLimitReached)
+      describe '#has_reached_limit?' do
+        it "is false" do
+          expect(limiter.has_reached_limit?).to be false
+        end
       end
 
     end
